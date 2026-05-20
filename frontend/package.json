@@ -1,0 +1,35 @@
+{
+  "name": "vulnscan-ai-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.22.0",
+    "axios": "^1.6.7",
+    "zustand": "^4.5.1",
+    "tailwindcss": "^3.4.1",
+    "@radix-ui/react-dialog": "latest",
+    "@radix-ui/react-select": "latest",
+    "@radix-ui/react-checkbox": "latest",
+    "@radix-ui/react-tabs": "latest",
+    "@radix-ui/react-toast": "latest",
+    "@radix-ui/react-tooltip": "latest",
+    "lucide-react": "^0.344.0",
+    "react-virtual": "^2.10.4",
+    "clsx": "^2.1.0",
+    "date-fns": "^3.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.17",
+    "postcss": "^8.4.35",
+    "vite": "^5.1.4"
+  }
+}

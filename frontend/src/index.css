@@ -1,0 +1,95 @@
+/* Tailwind CSS direktifleri */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------------------------------------------------------------------------
+ * Global stiller — Spesifikasyon Bölüm 12.1 renk paleti
+ * ------------------------------------------------------------------------- */
+
+:root {
+  --bg-primary:    #0a0e1a;
+  --bg-secondary:  #111827;
+  --bg-tertiary:   #1f2937;
+  --border:        #374151;
+  --text-primary:  #f9fafb;
+  --text-secondary:#9ca3af;
+  --text-muted:    #6b7280;
+
+  --status-running: #3b82f6;
+  --status-success: #10b981;
+  --status-warning: #f59e0b;
+  --status-error:   #ef4444;
+  --status-paused:  #8b5cf6;
+  --status-info:    #6b7280;
+
+  --severity-critical: #dc2626;
+  --severity-high:     #ea580c;
+  --severity-medium:   #d97706;
+  --severity-low:      #65a30d;
+  --severity-info:     #0284c7;
+}
+
+/* Ana arka plan ve yazı tipi */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar stili — terminal estetiği */
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-secondary); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* Monospace kod blokları */
+code, pre, .font-mono {
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+}
+
+/* ---------------------------------------------------------------------------
+ * Animasyonlar — Bölüm 12.2
+ * ------------------------------------------------------------------------- */
+
+@keyframes slide-in-top {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+.animate-slide-in { animation: slide-in-top 0.18s ease-out; }
+.animate-fade-in  { animation: fade-in 0.15s ease-out; }
+.animate-pulse-dot{ animation: pulse-dot 1.4s ease-in-out infinite; }
+
+/* ---------------------------------------------------------------------------
+ * Risk skoru renk geçişi yardımcıları
+ * ------------------------------------------------------------------------- */
+
+.risk-score-bar {
+  transition: width 0.4s ease, background-color 0.4s ease;
+}
+.risk-low      { background-color: var(--severity-low);      color: #fff; }
+.risk-medium   { background-color: var(--severity-medium);   color: #fff; }
+.risk-high     { background-color: var(--severity-high);     color: #fff; }
+.risk-critical { background-color: var(--severity-critical); color: #fff; }
+
+/* ---------------------------------------------------------------------------
+ * Utility — gizlenebilir panel geçişi
+ * ------------------------------------------------------------------------- */
+
+.panel-transition {
+  transition: width 0.2s ease, opacity 0.2s ease;
+  overflow: hidden;
+}

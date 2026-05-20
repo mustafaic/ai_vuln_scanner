@@ -1,0 +1,78 @@
+# ─── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.pyo
+
+# Virtual environment
+venv/
+.venv/
+env/
+.env/
+
+# ─── Environment / Secrets ───────────────────────────────────────────────────
+.env
+*.env.local
+*.env.production
+
+# ─── Data / Runtime ──────────────────────────────────────────────────────────
+data/vulnscan.db
+data/vulnscan.db-shm
+data/vulnscan.db-wal
+data/wordlists/
+data/sqlmap/
+data/nuclei/
+data/logs/
+
+# ─── Frontend ────────────────────────────────────────────────────────────────
+frontend/node_modules/
+frontend/dist/
+
+# ─── Node ────────────────────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ─── IDE / Editor ────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+
+# ─── OS ──────────────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+
+# ─── Logs ────────────────────────────────────────────────────────────────────
+*.log
+logs/
+*.out
+
+# ─── Coverage / Testing ──────────────────────────────────────────────────────
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ─── Temp ────────────────────────────────────────────────────────────────────
+*.tmp
+*.bak
+*.orig
