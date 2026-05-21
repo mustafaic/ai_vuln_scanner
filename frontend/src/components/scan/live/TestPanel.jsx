@@ -46,7 +46,7 @@ export default function TestPanel({ scanId, selectedUrlIds = [], onStarted }) {
   const urls            = useScanStore((s) => s.urls);
   const toolLog         = useScanStore((s) => s.toolLog);
   const wafBypassNeeded = useScanStore((s) => s.wafBypassNeeded);
-  const updateActiveScan = useScanStore((s) => s.updateActiveScan);
+  const clearWafBypass  = useScanStore((s) => s.clearWafBypass);
   const addNotification = useUiStore((s) => s.addNotification);
 
   const logBottomRef = useRef(null);
@@ -118,7 +118,7 @@ export default function TestPanel({ scanId, selectedUrlIds = [], onStarted }) {
         finding_id: wafBypassNeeded.finding_id,
         technique,
       });
-      updateActiveScan({ wafBypassNeeded: null });
+      clearWafBypass();
       addNotification({ title: 'WAF Bypass uygulandı', type: 'success' });
     } catch (err) {
       addNotification({ title: 'Bypass Hatası', body: err.message, type: 'error' });

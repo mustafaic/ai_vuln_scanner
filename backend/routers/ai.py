@@ -128,7 +128,12 @@ async def ai_chat(
                 # SSE formatı
                 yield f"data: {json.dumps({'token': token}, ensure_ascii=False)}\n\n"
         except Exception as exc:
-            yield f"data: {json.dumps({'error': str(exc)})}\n\n"
+            # İç ağ detaylarını (Docker hostname, port vb.) kullanıcıya gösterme
+            import re as _re
+            raw = str(exc)
+            sanitized = _re.sub(r"for url '[^']*'", "for AI service", raw)
+            sanitized = _re.sub(r"https?://[^\s'\"]+", "[AI service URL]", sanitized)
+            yield f"data: {json.dumps({'error': sanitized})}\n\n"
         finally:
             yield "data: [DONE]\n\n"
 

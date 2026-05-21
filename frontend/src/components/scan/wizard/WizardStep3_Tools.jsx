@@ -166,7 +166,7 @@ export default function WizardStep3_Tools({ data, onChange, onStart, onBack, loa
           Hiçbirini Seçme
         </button>
         <span className="text-[10px] text-gray-600 ml-auto">
-          {installedSelected}/{totalSelected} seçili
+          {installedSelected} kurulu · {totalSelected}/{allToolNames.length} seçili
         </span>
       </div>
 

@@ -17,6 +17,8 @@ import {
   resumeScan as apiResumeScan,
   stopScan as apiStopScan,
   getScan as apiGetScan,
+  getSubdomains as apiGetSubdomains,
+  getUrls as apiGetUrls,
 } from '../api/client';
 import useScanStore from '../store/scanStore';
 import useUiStore from '../store/uiStore';
@@ -29,6 +31,8 @@ export function useScan() {
   const setActiveScanId = useScanStore((s) => s.setActiveScanId);
   const updateActiveScan = useScanStore((s) => s.updateActiveScan);
   const clearScanData = useScanStore((s) => s.clearScanData);
+  const addSubdomain = useScanStore((s) => s.addSubdomain);
+  const addUrlBatch = useScanStore((s) => s.addUrlBatch);
 
   const addNotification = useUiStore((s) => s.addNotification);
 
@@ -77,7 +81,25 @@ export function useScan() {
       try {
         const scan = await apiGetScan(scanId);
         setActiveScanId(scanId);
-        setActiveScan(scan);
+        setActiveScan(scan); // setActiveScan artık currentPhase'i de senkronize eder
+
+        // Sayfa yenilemesi veya direkt URL ile açılışta mevcut verileri yükle
+        // WS bağlantısı kurulana kadar UI'ın doğru durumu göstermesi için
+        if (scan.subdomain_count > 0) {
+          apiGetSubdomains(scanId, { limit: 200 })
+            .then((data) => {
+              if (data.items?.length) data.items.forEach((s) => addSubdomain(s));
+            })
+            .catch(() => {});
+        }
+        if (scan.url_count > 0) {
+          apiGetUrls(scanId, { limit: 500 })
+            .then((data) => {
+              if (data.items?.length) addUrlBatch(data.items);
+            })
+            .catch(() => {});
+        }
+
         return scan;
       } catch (err) {
         setError(err.message);
@@ -86,7 +108,7 @@ export function useScan() {
         setLoading(false);
       }
     },
-    [setActiveScan, setActiveScanId],
+    [setActiveScan, setActiveScanId, addSubdomain, addUrlBatch],
   );
 
   const pause = useCallback(

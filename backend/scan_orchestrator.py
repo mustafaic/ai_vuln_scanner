@@ -297,8 +297,11 @@ class ScanOrchestrator:
         Duraklatılmış taramayı devam ettirir.
 
         pause_event.set() ile bekleyen araçlar çalışmaya devam eder.
+        Sadece 'paused' durumundaki taramalar devam ettirilebilir.
         """
         runner = self._get_runner(scan_id)
+        if runner.status != "paused":
+            raise ValueError(f"Tarama duraklatılmış değil (mevcut durum: {runner.status}).")
         runner.pause_event.set()
         runner.status = "running"
         await self._update_scan_status(scan_id, "running")

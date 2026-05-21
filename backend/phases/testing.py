@@ -204,6 +204,7 @@ class TestingPhase:
     async def _wait_for_bypass(
         self,
         url_str: str,
+        url_id: int,
         waf_name: str,
         test_type: str,
     ) -> Optional[Dict[str, Any]]:
@@ -239,6 +240,7 @@ class TestingPhase:
             ws_events.waf_bypass_needed(
                 scan_id=self.scan_id,
                 url=url_str,
+                url_id=url_id,
                 waf_name=waf_name,
                 test_type=test_type,
                 suggestions=bypass_suggestions,
@@ -535,7 +537,35 @@ class TestingPhase:
             or raw.get("severity", "info")
         )
 
-        # DB kaydı
+        # ai_confidence: string ("high"/"medium"/"low") → int (0-100)
+        _CONF_MAP: Dict[str, int] = {"high": 90, "medium": 60, "low": 30}
+        conf_raw = ai_analysis.get("confidence", "medium")
+        ai_confidence_val: Optional[int] = (
+            _CONF_MAP.get(str(conf_raw).lower())
+            if isinstance(conf_raw, str)
+            else (int(conf_raw) if conf_raw is not None else None)
+        )
+
+        # ai_analysis metnini oluştur (exploitability + impact + fix)
+        _analysis_parts: List[str] = []
+        if ai_analysis.get("exploitability"):
+            _analysis_parts.append(f"Exploitability: {ai_analysis['exploitability']}")
+        if ai_analysis.get("impact"):
+            _analysis_parts.append(f"Impact: {ai_analysis['impact']}")
+        if ai_analysis.get("fix_recommendation"):
+            _analysis_parts.append(f"Fix: {ai_analysis['fix_recommendation']}")
+        ai_analysis_text: Optional[str] = "\n".join(_analysis_parts) or None
+
+        # ai_poc: poc_steps listesini düz metin olarak sakla
+        poc_steps = ai_analysis.get("poc_steps")
+        ai_poc_text: Optional[str] = None
+        if poc_steps:
+            if isinstance(poc_steps, list):
+                ai_poc_text = "\n".join(str(s) for s in poc_steps)
+            else:
+                ai_poc_text = str(poc_steps)
+
+        # DB kaydı — yalnızca Finding modelinde var olan alanlar kullanılır
         finding = Finding(
             scan_id=self.scan_id,
             url_id=url_obj.id,
@@ -544,20 +574,14 @@ class TestingPhase:
             title=raw.get("title", finding_input["vuln_type"].upper()),
             payload=finding_input["payload"],
             evidence=finding_input["tool_output"],
-            param=raw.get("param"),
-            tool=raw.get("source", "unknown"),
-            template_id=raw.get("template_id"),
-            matched_at=raw.get("matched_at"),
-            confidence=ai_analysis.get("confidence", "medium"),
-            is_real_vulnerability=is_real,
-            false_positive_risk=false_positive_risk,
-            exploitability=ai_analysis.get("exploitability"),
-            impact=ai_analysis.get("impact"),
-            poc_steps=ai_analysis.get("poc_steps"),
-            fix_recommendation=ai_analysis.get("fix_recommendation"),
+            request_raw=finding_input.get("request_raw", ""),
+            response_snippet=finding_input.get("response_snippet", ""),
+            tool_used=raw.get("source", "unknown"),
+            ai_confidence=ai_confidence_val,
+            ai_analysis=ai_analysis_text,
+            ai_poc=ai_poc_text,
+            waf_bypassed=bypass_technique is not None,
             bypass_technique=bypass_technique.get("name") if bypass_technique else None,
-            waf_name=waf_name,
-            raw_output=raw.get("raw", ""),
         )
         self.db_session.add(finding)
         await self.db_session.flush()  # ID al
@@ -571,7 +595,7 @@ class TestingPhase:
                 vuln_type=finding_input["vuln_type"],
                 severity=severity,
                 title=finding.title,
-                confidence=finding.confidence,
+                confidence=ai_confidence_val,
                 is_real=is_real,
                 payload=finding_input["payload"],
                 evidence=finding_input["tool_output"],
@@ -685,6 +709,7 @@ class TestingPhase:
                     if test_type not in bypass_decisions:
                         bypass_technique = await self._wait_for_bypass(
                             url_str=url_str,
+                            url_id=url_obj.id,
                             waf_name=waf_name,
                             test_type=test_type,
                         )

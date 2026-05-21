@@ -295,7 +295,32 @@ async def lifespan(app: FastAPI):
     logger.info("[startup] Orkestratör başlatıldı.")
 
     # -----------------------------------------------------------------
-    # 7. Tarayıcı aç (TTY'de)
+    # 7. Orphaned scan temizliği
+    # -----------------------------------------------------------------
+    # Sunucu yeniden başlatıldığında 'running', 'paused' veya 'waiting_user'
+    # durumundaki taramalar artık orkestratörde yok — DB'yi 'stopped' yap.
+    try:
+        from sqlalchemy import update as _sa_update
+        from models import Scan as _Scan
+        from database import AsyncSessionLocal as _ASL
+        async with _ASL() as _session:
+            result = await _session.execute(
+                _sa_update(_Scan)
+                .where(_Scan.status.in_(["running", "paused", "waiting_user"]))
+                .values(status="stopped")
+                .execution_options(synchronize_session=False)
+            )
+            await _session.commit()
+            if result.rowcount:
+                logger.info(
+                    "[startup] %d orphaned tarama 'stopped' olarak işaretlendi.",
+                    result.rowcount,
+                )
+    except Exception as _exc:
+        logger.warning("[startup] Orphaned scan temizliği başarısız: %s", _exc)
+
+    # -----------------------------------------------------------------
+    # 8. Tarayıcı aç (TTY'de)
     # -----------------------------------------------------------------
     _open_browser_once()
 
@@ -354,9 +379,11 @@ app.add_middleware(
 async def _404_handler(request: Request, exc: Exception) -> JSONResponse:
     """API rotaları için 404; SPA rotaları için index.html."""
     if request.url.path.startswith("/api/") or request.url.path.startswith("/ws/"):
+        # HTTPException'dan gelen detail'i koru; yoksa genel mesaj göster
+        detail = getattr(exc, "detail", None) or f"Endpoint bulunamadı: {request.url.path}"
         return JSONResponse(
             status_code=404,
-            content={"detail": f"Endpoint bulunamadı: {request.url.path}"},
+            content={"detail": detail},
         )
     # React Router: API olmayan path'ler için index.html
     index = _FRONTEND_DIST / "index.html"
@@ -448,12 +475,14 @@ async def websocket_endpoint(websocket: WebSocket, scan_id: str) -> None:
     try:
         # Bağlantı onayı — aktif tarama varsa durumunu bildir
         status_info = orchestrator.get_scan_status(scan_id)
+        # status_info zaten scan_id içerebilir — çakışmayı önlemek için çıkar
+        extra = {k: v for k, v in (status_info or {}).items() if k != "scan_id"}
         await websocket.send_json(
             ws_events._event(
                 "connected",
                 scan_id=scan_id,
                 active=status_info is not None,
-                **(status_info or {}),
+                **extra,
             )
         )
 

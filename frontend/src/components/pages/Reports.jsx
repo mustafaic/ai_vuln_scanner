@@ -208,7 +208,7 @@ export default function Reports() {
     setLoading(true);
     try {
       const data = await getReports();
-      const list = data.reports ?? data ?? [];
+      const list = data.items ?? data.reports ?? [];
       setReports(list);
 
       // Her rapor için scan bilgisini çek (target göstermek için)

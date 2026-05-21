@@ -448,13 +448,19 @@ def finding_found(finding_data: Dict[str, Any]) -> Dict[str, Any]:
     return _event("finding_found", data=finding_data)
 
 
-def waf_detected(waf_name: str, url: str) -> Dict[str, Any]:
+def waf_detected(
+    waf_name: str = "",
+    url: str = "",
+    scan_id: Optional[str] = None,
+    **_: Any,
+) -> Dict[str, Any]:
     """
     Hedefte WAF tespit edildiginde gonderilir.
 
     Args:
         waf_name: Tespit edilen WAF adi (Cloudflare, ModSecurity, vb.)
         url:      WAF'in tespit edildigi URL.
+        scan_id:  Tarama ID'si (opsiyonel).
     """
     return _event("waf_detected", data={"waf": waf_name, "url": url})
 
@@ -467,6 +473,121 @@ def waf_suggestions(techniques: List[Dict[str, Any]]) -> Dict[str, Any]:
         techniques: suggest_waf_bypass() tarafindan uretilen teknik listesi.
     """
     return _event("waf_suggestions", data={"techniques": techniques})
+
+
+def waf_bypass_needed(
+    scan_id: str,
+    url: str,
+    url_id: int,
+    waf_name: str,
+    test_type: str,
+    suggestions: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """
+    Testing fazinda WAF tespit edildiginde kullanicidan bypass karari beklenir.
+
+    Args:
+        scan_id:     Tarama ID'si.
+        url:         WAF tarafindan engellenen URL (string).
+        url_id:      Veritabanindaki URL kaydinin ID'si (API cagrisi icin).
+        waf_name:    Tespit edilen WAF adi.
+        test_type:   Calistirilan test turu (xss, sqli vb.).
+        suggestions: AI tarafindan onerilen bypass teknikleri.
+    """
+    return _event(
+        "waf_bypass_needed",
+        scan_id=scan_id,
+        url=url,
+        url_id=url_id,
+        waf_name=waf_name,
+        test_type=test_type,
+        suggestions=suggestions or {},
+    )
+
+
+# ---------------------------------------------------------------------------
+# Testing fazi olaylari (testing.py tarafindan kullanilir)
+# ---------------------------------------------------------------------------
+
+
+def phase_progress(
+    scan_id: str,
+    phase: str,
+    progress: int,
+    message: str = "",
+    **_: Any,
+) -> Dict[str, Any]:
+    """
+    Faz ilerlemesini bildirir; hem progress hem log gonder.
+
+    testing.py'deki phase_progress cagrisiyla uyumludur.
+    """
+    return _event(
+        "progress",
+        scan_id=scan_id,
+        phase=phase,
+        percent=progress,
+        message=message,
+    )
+
+
+def phase_complete(
+    scan_id: str,
+    phase: str,
+    summary: Optional[Dict[str, Any]] = None,
+    **_: Any,
+) -> Dict[str, Any]:
+    """
+    Faz tamamlandı eventi; phase_completed ile uyumludur.
+
+    testing.py'deki phase_complete cagrisiyla uyumludur.
+    """
+    return _event(
+        "phase_completed",
+        scan_id=scan_id,
+        phase=phase,
+        data=summary or {},
+    )
+
+
+def new_finding(
+    scan_id: str,
+    finding_id: int,
+    url: str,
+    vuln_type: str,
+    severity: str,
+    title: Optional[str] = None,
+    confidence: Optional[int] = None,
+    is_real: bool = True,
+    payload: Optional[str] = None,
+    evidence: Optional[str] = None,
+    fix_recommendation: Optional[str] = None,
+    **_: Any,
+) -> Dict[str, Any]:
+    """
+    Yeni bir bulgu tespit edildiginde gonderilir.
+
+    testing.py'deki new_finding cagrisiyla uyumludur.
+    Frontend scanStore'daki 'new_finding' case'i data alanini bekler.
+    """
+    return _event(
+        "new_finding",
+        scan_id=scan_id,
+        data={
+            "id": finding_id,
+            "url": url,
+            "vuln_type": vuln_type,
+            "severity": severity,
+            "title": title or vuln_type.upper(),
+            "ai_confidence": confidence,
+            "is_real": is_real,
+            "payload": payload,
+            "evidence": evidence,
+            "fix_recommendation": fix_recommendation,
+            "status": "new",
+            "waf_bypassed": False,
+        },
+    )
 
 
 # ---------------------------------------------------------------------------

@@ -1,0 +1,30 @@
+# Hem frontend hem backend değişikliklerini mevcut image üzerine uygular.
+# Go araçlarını yeniden derlemeye gerek yok.
+
+# ── Adım 1: Frontend build ────────────────────────────────────────────────────
+FROM node:20-alpine AS frontend-builder
+
+WORKDIR /build
+
+COPY frontend/package.json frontend/package-lock.json* ./
+COPY frontend/.npmrc* ./
+RUN npm install --legacy-peer-deps
+
+COPY frontend/ ./
+RUN npm run build
+
+# ── Adım 2: Mevcut image üzerine frontend + backend değişikliklerini kopyala ──
+FROM vulnscan-ai-app:latest
+
+# Güncellenmiş frontend
+COPY --from=frontend-builder /build/dist/ /app/frontend/dist/
+
+# Güncellenmiş backend dosyaları
+COPY backend/main.py /app/backend/main.py
+COPY backend/schemas.py /app/backend/schemas.py
+COPY backend/routers/scans.py /app/backend/routers/scans.py
+COPY backend/routers/ai.py /app/backend/routers/ai.py
+COPY backend/phases/discovery.py /app/backend/phases/discovery.py
+COPY backend/scan_orchestrator.py /app/backend/scan_orchestrator.py
+COPY backend/phases/testing.py /app/backend/phases/testing.py
+COPY backend/websocket_manager.py /app/backend/websocket_manager.py

@@ -54,7 +54,11 @@ export default function AiChatPanel() {
       scan_id: activeScan.id,
       target: activeScan.target,
       tech_stack: subdomains
-        .flatMap((s) => { try { return JSON.parse(s.tech_stack ?? '[]'); } catch { return []; } })
+        .flatMap((s) => {
+          const raw = s.tech_stack;
+          if (Array.isArray(raw)) return raw;
+          try { return JSON.parse(raw ?? '[]'); } catch { return []; }
+        })
         .filter((v, i, a) => a.indexOf(v) === i)
         .slice(0, 10),
       current_phase: activeScan.current_phase,

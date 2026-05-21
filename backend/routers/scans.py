@@ -29,6 +29,7 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
 from sqlalchemy import asc, desc, func, select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
@@ -144,10 +145,50 @@ async def list_scans(
     result = await db.execute(query)
     scans = result.scalars().all()
 
-    return _paginate(
-        [ScanListResponse.model_validate(s) for s in scans],
-        page, limit, total,
-    )
+    # Toplu istatistik sorguları (N+1 önleme)
+    scan_ids = [s.id for s in scans]
+    sub_map: dict = {}
+    url_map: dict = {}
+    finding_map: dict = {}
+    sev_map: dict = {}
+    if scan_ids:
+        sub_rows = (await db.execute(
+            select(Subdomain.scan_id, func.count(Subdomain.id).label("cnt"))
+            .where(Subdomain.scan_id.in_(scan_ids))
+            .group_by(Subdomain.scan_id)
+        )).all()
+        url_rows = (await db.execute(
+            select(Url.scan_id, func.count(Url.id).label("cnt"))
+            .where(Url.scan_id.in_(scan_ids))
+            .group_by(Url.scan_id)
+        )).all()
+        finding_rows = (await db.execute(
+            select(Finding.scan_id, func.count(Finding.id).label("cnt"))
+            .where(Finding.scan_id.in_(scan_ids))
+            .group_by(Finding.scan_id)
+        )).all()
+        # Severity bazlı bulgu sayısı (finding_stats)
+        sev_rows = (await db.execute(
+            select(Finding.scan_id, Finding.severity, func.count(Finding.id).label("cnt"))
+            .where(Finding.scan_id.in_(scan_ids))
+            .group_by(Finding.scan_id, Finding.severity)
+        )).all()
+        sub_map = {r.scan_id: r.cnt for r in sub_rows}
+        url_map = {r.scan_id: r.cnt for r in url_rows}
+        finding_map = {r.scan_id: r.cnt for r in finding_rows}
+        for r in sev_rows:
+            sev_map.setdefault(r.scan_id, {})[r.severity] = r.cnt
+
+    items = []
+    for s in scans:
+        resp = ScanListResponse.model_validate(s)
+        resp.subdomain_count = sub_map.get(s.id, 0)
+        resp.url_count = url_map.get(s.id, 0)
+        resp.finding_count = finding_map.get(s.id, 0)
+        resp.finding_stats = sev_map.get(s.id, {})
+        items.append(resp)
+
+    return _paginate(items, page, limit, total)
 
 
 @router.get("/{scan_id}", response_model=ScanResponse)
@@ -246,6 +287,8 @@ async def resume_scan(
         await orch.resume_scan(scan_id)
     except KeyError:
         raise HTTPException(status_code=404, detail="Aktif tarama bulunamadı.")
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
     return MessageResponse(message="Tarama devam ettiriliyor.")
 
 
@@ -530,7 +573,7 @@ async def list_findings(
     """Bulgular listesini filtreli ve sayfalandırmalı döndürür."""
     await _get_scan_or_404(scan_id, db)
 
-    query = select(Finding).where(Finding.scan_id == scan_id)
+    query = select(Finding).where(Finding.scan_id == scan_id).options(selectinload(Finding.url))
     if severity:
         query = query.where(Finding.severity == severity)
     if vuln_type:
@@ -562,7 +605,9 @@ async def update_finding(
     db: AsyncSession = Depends(get_db),
 ) -> FindingResponse:
     """Bulgu durumunu veya notlarını günceller."""
-    result = await db.execute(select(Finding).where(Finding.id == finding_id))
+    result = await db.execute(
+        select(Finding).where(Finding.id == finding_id).options(selectinload(Finding.url))
+    )
     finding = result.scalar_one_or_none()
     if finding is None:
         raise HTTPException(status_code=404, detail=f"Bulgu bulunamadı: {finding_id}")

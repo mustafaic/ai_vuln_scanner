@@ -22,7 +22,8 @@ const STATUS_CONFIG = {
   completed: { label: 'Tamamlandı',   bg: 'bg-green-500/20',  text: 'text-green-400',  dot: 'bg-green-400' },
   failed:    { label: 'Başarısız',    bg: 'bg-red-500/20',    text: 'text-red-400',    dot: 'bg-red-400' },
   stopped:   { label: 'Durduruldu',   bg: 'bg-gray-500/20',   text: 'text-gray-400',   dot: 'bg-gray-500' },
-  pending:   { label: 'Bekliyor',     bg: 'bg-yellow-500/20', text: 'text-yellow-400', dot: 'bg-yellow-400' },
+  pending:       { label: 'Bekliyor',        bg: 'bg-yellow-500/20',  text: 'text-yellow-400',  dot: 'bg-yellow-400' },
+  waiting_user:  { label: 'Kullanıcı Seçimi', bg: 'bg-orange-500/20',  text: 'text-orange-400',  dot: 'bg-orange-400 animate-pulse-dot' },
 };
 
 const MODE_LABEL = { stealth: 'Gizli', normal: 'Normal', aggressive: 'Agresif' };
@@ -81,7 +82,7 @@ export default function ScanHistory() {
         ...(statusFilter ? { status: statusFilter } : {}),
       };
       const data = await listScans(params);
-      const list = data.scans ?? data ?? [];
+      const list = data.items ?? data.scans ?? [];
       setScans(list);
       setTotal(data.total ?? list.length);
     } catch (err) {

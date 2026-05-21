@@ -108,6 +108,12 @@ class ScanListResponse(_OrmBase):
     updated_at: datetime
     completed_at: Optional[datetime]
 
+    # İstatistikler — list endpoint tarafından toplu sorgu ile doldurulur
+    subdomain_count: Optional[int] = None
+    url_count: Optional[int] = None
+    finding_count: Optional[int] = None
+    finding_stats: Optional[Dict[str, int]] = None  # {"critical": n, "high": n, ...}
+
 
 # ===========================================================================
 # Subdomain
@@ -202,12 +208,20 @@ class UrlUpdate(BaseModel):
 # ===========================================================================
 
 
+class FindingUrlInfo(_OrmBase):
+    """FindingResponse içinde gömülü URL özet bilgisi."""
+
+    id: int
+    url: str
+
+
 class FindingResponse(_OrmBase):
     """Bulgu yaniti."""
 
     id: int
     scan_id: str
     url_id: Optional[int]
+    url: Optional[FindingUrlInfo] = None  # ilişkili URL (eager load gerektirir)
     vuln_type: str
     severity: str
     title: Optional[str]

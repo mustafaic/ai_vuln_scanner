@@ -23,7 +23,7 @@ import logging
 from typing import Any, Dict, List, Optional, Set, Tuple
 from urllib.parse import urlparse
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import websocket_manager as ws_events
@@ -325,6 +325,7 @@ class DiscoveryPhase:
             self.db.add(url_obj)
             await self.db.flush()
             added += 1
+            data["_db_id"] = url_obj.id  # AI analizi sonrası güncelleme için sakla
 
             emit_buffer.append({
                 "id": url_obj.id,
@@ -346,6 +347,35 @@ class DiscoveryPhase:
             await self._send(ws_events.url_batch(emit_buffer))
 
         return added
+
+    # -----------------------------------------------------------------------
+    # AI sonuçlarını DB'ye yaz
+    # -----------------------------------------------------------------------
+
+    async def _update_ai_results(
+        self,
+        url_data_list: List[Dict[str, Any]],
+    ) -> None:
+        """
+        AI analiz sonuçlarını DB'deki mevcut URL kayıtlarına günceller.
+        _save_url_batch sonrası, _run_ai_analysis tamamlandıktan çağrılır.
+        """
+        for data in url_data_list:
+            db_id = data.get("_db_id")
+            if not db_id:
+                continue
+            ai_analysis = data.get("ai_analysis")
+            if ai_analysis is None:
+                continue
+            await self.db.execute(
+                update(Url)
+                .where(Url.id == db_id)
+                .values(
+                    ai_analysis=ai_analysis,
+                    risk_score=data.get("risk_score", 0),
+                    vuln_categories=data.get("vuln_categories") or [],
+                )
+            )
 
     # -----------------------------------------------------------------------
     # AI analizi
@@ -490,7 +520,17 @@ class DiscoveryPhase:
         await self._send(ws_events.progress(65, "discovery"))
 
         # ---------------------------------------------------------------
-        # 5. AI URL analizi
+        # 5. DB kaydı — önce kaydet, frontend'e hemen göster
+        # ---------------------------------------------------------------
+        subdomain_id_cache: Dict[str, Optional[int]] = {}
+        total_added = await self._save_url_batch(url_data_list, subdomain_id_cache)
+        await self.db.commit()
+
+        logger.info("[discovery] saved %d URLs to DB", total_added)
+        await self._send(ws_events.progress(70, "discovery"))
+
+        # ---------------------------------------------------------------
+        # 6. AI URL analizi — DB kaydı sonrası arka planda çalışır
         # ---------------------------------------------------------------
         # Tech stack: ilk hedefin subdomaininden al
         tech_stack = await self._get_tech_stack_for_target(
@@ -504,16 +544,11 @@ class DiscoveryPhase:
             url_data_list, primary_target, tech_stack
         )
         await self._check_pause()
-        await self._send(ws_events.progress(80, "discovery"))
 
-        # ---------------------------------------------------------------
-        # 6. DB kaydı
-        # ---------------------------------------------------------------
-        subdomain_id_cache: Dict[str, Optional[int]] = {}
-        total_added = await self._save_url_batch(url_data_list, subdomain_id_cache)
+        # AI sonuçlarını DB'de güncelle
+        await self._update_ai_results(url_data_list)
         await self.db.commit()
 
-        logger.info("[discovery] saved %d URLs to DB", total_added)
         await self._send(ws_events.progress(100, "discovery"))
         await self._send(
             ws_events.phase_completed(

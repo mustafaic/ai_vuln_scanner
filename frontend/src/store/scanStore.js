@@ -54,7 +54,13 @@ const useScanStore = create((set, get) => ({
 
   setActiveScanId: (id) => set({ activeScanId: id }),
 
-  setActiveScan: (scan) => set({ activeScan: scan }),
+  setActiveScan: (scan) =>
+    set({
+      activeScan: scan,
+      // Sayfa yenilemesinde API'den gelen current_phase'i store'a aktar;
+      // WS olayları bunu üzerine yazar ama bağlantı kurulana kadar UI doğru fazı gösterir.
+      ...(scan?.current_phase ? { currentPhase: scan.current_phase } : {}),
+    }),
 
   setScans: (scans) => set({ scans }),
 
@@ -319,6 +325,7 @@ const useScanStore = create((set, get) => ({
       case 'waf_bypass_needed':
         store.setWafBypassNeeded({
           url: msg.url,
+          url_id: msg.url_id,
           waf_name: msg.waf_name,
           test_type: msg.test_type,
           suggestions: msg.suggestions ?? {},

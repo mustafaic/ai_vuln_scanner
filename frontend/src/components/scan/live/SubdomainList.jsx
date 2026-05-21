@@ -31,7 +31,7 @@ function scoreColor(score) {
 
 function AiDetailPopup({ sub, onClose }) {
   let tags = [];
-  try { tags = JSON.parse(sub.ai_tags ?? '[]'); } catch { tags = []; }
+  try { tags = Array.isArray(sub.ai_tags) ? sub.ai_tags : JSON.parse(sub.ai_tags ?? '[]'); } catch { tags = []; }
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
@@ -256,8 +256,8 @@ export default function SubdomainList({ scanId, onSelectionDone }) {
             ) : visible.map((sub) => {
               let tech = [];
               let ips  = [];
-              try { tech = JSON.parse(sub.tech_stack ?? '[]'); } catch {}
-              try { ips  = JSON.parse(sub.ip_addresses ?? '[]'); } catch {}
+              try { tech = Array.isArray(sub.tech_stack)   ? sub.tech_stack   : JSON.parse(sub.tech_stack   ?? '[]'); } catch {}
+              try { ips  = Array.isArray(sub.ip_addresses) ? sub.ip_addresses : JSON.parse(sub.ip_addresses ?? '[]'); } catch {}
               const score = sub.ai_score;
               const prio  = PRIORITY_CONFIG[sub.priority];
               const isNew = newIds.has(sub.id);

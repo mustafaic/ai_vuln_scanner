@@ -222,17 +222,19 @@ export default function ScanLive() {
               : 'bg-red-400'
             }`} title={`WebSocket: ${wsStatus}`} />
             <span className={`text-[10px] font-medium ${
-              scanStatus === 'running'   ? 'text-blue-400'
-              : scanStatus === 'paused'  ? 'text-orange-400'
-              : scanStatus === 'completed' ? 'text-green-400'
-              : scanStatus === 'stopped' ? 'text-red-400'
+              scanStatus === 'running'        ? 'text-blue-400'
+              : scanStatus === 'paused'       ? 'text-orange-400'
+              : scanStatus === 'completed'    ? 'text-green-400'
+              : scanStatus === 'stopped'      ? 'text-red-400'
+              : scanStatus === 'waiting_user' ? 'text-yellow-400'
               : 'text-gray-500'
             }`}>
-              {scanStatus === 'running'   ? 'Çalışıyor'
-               : scanStatus === 'paused'  ? 'Duraklatıldı'
-               : scanStatus === 'completed' ? 'Tamamlandı'
-               : scanStatus === 'stopped' ? 'Durduruldu'
-               : scanStatus === 'failed'  ? 'Başarısız'
+              {scanStatus === 'running'        ? 'Çalışıyor'
+               : scanStatus === 'paused'       ? 'Duraklatıldı'
+               : scanStatus === 'completed'    ? 'Tamamlandı'
+               : scanStatus === 'stopped'      ? 'Durduruldu'
+               : scanStatus === 'failed'       ? 'Başarısız'
+               : scanStatus === 'waiting_user' ? 'Kullanıcı Seçimi'
                : 'Bekleniyor'}
             </span>
           </div>

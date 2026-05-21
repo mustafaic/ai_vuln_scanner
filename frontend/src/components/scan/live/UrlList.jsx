@@ -14,6 +14,13 @@ import { useState, useMemo, useRef, useCallback } from 'react';
 import { useVirtual } from 'react-virtual';
 import useScanStore from '../../../store/scanStore';
 
+// Dizi veya JSON string olarak gelen alanı güvenli şekilde array'e çevirir
+function parseArray(val) {
+  if (Array.isArray(val)) return val;
+  if (!val) return [];
+  try { const r = JSON.parse(val); return Array.isArray(r) ? r : []; } catch { return []; }
+}
+
 const CATEGORIES = [
   { id: 'xss',      label: 'XSS',       cls: 'bg-red-500/20 text-red-400 border-red-500/30' },
   { id: 'sqli',     label: 'SQLi',      cls: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
@@ -70,10 +77,8 @@ export default function UrlList({ onSelectForTest }) {
 
     if (activeCategories.size > 0) {
       list = list.filter((u) => {
-        try {
-          const cats = JSON.parse(u.vuln_categories ?? '[]');
-          return [...activeCategories].some((c) => cats.includes(c));
-        } catch { return false; }
+        const cats = parseArray(u.vuln_categories);
+        return [...activeCategories].some((c) => cats.includes(c));
       });
     }
 
@@ -85,9 +90,7 @@ export default function UrlList({ onSelectForTest }) {
       const kw = keyword.toLowerCase();
       list = list.filter((u) => {
         if (u.url.toLowerCase().includes(kw)) return true;
-        try {
-          return JSON.parse(u.keywords ?? '[]').some((k) => k.toLowerCase().includes(kw));
-        } catch { return false; }
+        return parseArray(u.keywords).some((k) => k.toLowerCase().includes(kw));
       });
     }
 
@@ -239,10 +242,8 @@ export default function UrlList({ onSelectForTest }) {
           <div style={{ height: rowVirtualizer.totalSize, position: 'relative' }}>
             {rowVirtualizer.virtualItems.map((vRow) => {
               const url  = visible[vRow.index];
-              let cats = [];
-              let keys = [];
-              try { cats = JSON.parse(url.vuln_categories ?? '[]'); } catch {}
-              try { keys = JSON.parse(url.keywords ?? '[]'); } catch {}
+              const cats = parseArray(url.vuln_categories);
+              const keys = parseArray(url.keywords);
 
               return (
                 <div

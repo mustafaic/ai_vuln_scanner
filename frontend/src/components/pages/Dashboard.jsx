@@ -21,12 +21,13 @@ import { tr } from 'date-fns/locale';
 // ---------------------------------------------------------------------------
 
 const STATUS_CONFIG = {
-  running:   { label: 'Çalışıyor',    color: 'text-blue-400',   dot: 'bg-blue-400 animate-pulse-dot' },
-  paused:    { label: 'Duraklatıldı', color: 'text-purple-400', dot: 'bg-purple-400' },
-  completed: { label: 'Tamamlandı',   color: 'text-green-400',  dot: 'bg-green-400' },
-  failed:    { label: 'Başarısız',    color: 'text-red-400',    dot: 'bg-red-400' },
-  stopped:   { label: 'Durduruldu',   color: 'text-gray-400',   dot: 'bg-gray-500' },
-  pending:   { label: 'Bekliyor',     color: 'text-yellow-400', dot: 'bg-yellow-400' },
+  running:       { label: 'Çalışıyor',       color: 'text-blue-400',   dot: 'bg-blue-400 animate-pulse-dot' },
+  paused:        { label: 'Duraklatıldı',    color: 'text-purple-400', dot: 'bg-purple-400' },
+  completed:     { label: 'Tamamlandı',      color: 'text-green-400',  dot: 'bg-green-400' },
+  failed:        { label: 'Başarısız',       color: 'text-red-400',    dot: 'bg-red-400' },
+  stopped:       { label: 'Durduruldu',      color: 'text-gray-400',   dot: 'bg-gray-500' },
+  pending:       { label: 'Bekliyor',        color: 'text-yellow-400', dot: 'bg-yellow-400' },
+  waiting_user:  { label: 'Kullanıcı Seçimi', color: 'text-orange-400', dot: 'bg-orange-400 animate-pulse-dot' },
 };
 
 function StatCard({ label, value, sub, accent }) {
@@ -132,7 +133,7 @@ export default function Dashboard() {
   const load = useCallback(async () => {
     try {
       const data = await listScans({ limit: 10 });
-      setScans(data.scans ?? data ?? []);
+      setScans(data.items ?? data.scans ?? []);
     } catch {
       setScans([]);
     } finally {

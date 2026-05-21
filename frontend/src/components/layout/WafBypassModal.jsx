@@ -36,7 +36,7 @@ export default function WafBypassModal() {
     setLoading(true);
     try {
       await applyWafBypass(activeScanId, {
-        url: wafData.url,
+        url_id: wafData.url_id,
         technique: selected ?? '__skip__',
       });
       closeModal();
@@ -52,7 +52,7 @@ export default function WafBypassModal() {
     setLoading(true);
     try {
       await applyWafBypass(activeScanId, {
-        url: wafData?.url,
+        url_id: wafData?.url_id,
         technique: '__skip__',
       });
       closeModal();

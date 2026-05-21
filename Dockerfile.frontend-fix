@@ -1,0 +1,19 @@
+# Sadece frontend'i yeniden derler ve mevcut image üzerine katman olarak ekler.
+# Go araçlarını yeniden derlemeye gerek yok — zaten vulnscan-ai-app image'ında mevcut.
+
+# ── Adım 1: Frontend build ────────────────────────────────────────────────────
+FROM node:20-alpine AS frontend-builder
+
+WORKDIR /build
+
+COPY frontend/package.json frontend/package-lock.json* ./
+COPY frontend/.npmrc* ./
+RUN npm install --legacy-peer-deps
+
+COPY frontend/ ./
+RUN npm run build
+
+# ── Adım 2: Mevcut image üzerine yeni dist'i kopyala ──────────────────────────
+FROM vulnscan-ai-app:latest
+
+COPY --from=frontend-builder /build/dist/ /app/frontend/dist/
