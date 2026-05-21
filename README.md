@@ -176,16 +176,21 @@ pip install wafw00f sqlmap paramspider
 
 ## AI Kurulumu (Ollama)
 
-AI özellikleri (bulgu analizi, PoC üretimi, chat) için Ollama gereklidir.
+AI özellikleri (bulgu analizi, PoC üretimi, chat) için Ollama gereklidir.  
+**Ollama olmadan da uygulama çalışır** — sadece AI butonları "kullanılamaz" gösterir.
 
-### Linux
+### Linux / WSL
 
 ```bash
 curl -fsSL https://ollama.ai/install.sh | sh
 ollama pull llama3.1:8b
 ```
 
-### Windows
+> **WSL kullanıcıları:** Ollama'yı WSL içine kuruyorsunuz (Windows'a değil).  
+> WSL terminalinde yukarıdaki komutları çalıştırın.  
+> Ollama varsayılan olarak `http://localhost:11434` adresinde çalışır, uygulama bunu otomatik bulur.
+
+### Windows (native)
 
 1. https://ollama.ai/download adresinden indirip kur
 2. CMD veya PowerShell'de:
@@ -194,16 +199,21 @@ ollama pull llama3.1:8b
 ollama pull llama3.1:8b
 ```
 
-### Farklı model kullanmak
+### Farklı / Daha Hafif Modeller
+
+Düşük RAM'li makineler için:
+
+```bash
+ollama pull llama3.2:3b      # 2 GB — hızlı, yeterli kalite
+ollama pull mistral:7b        # 4 GB — iyi denge
+ollama pull llama3.1:8b       # 5 GB — varsayılan, en iyi kalite
+ollama pull qwen2.5:7b        # 4 GB — alternatif
+```
 
 `.env` dosyasını düzenle:
 
 ```env
-OLLAMA_MODEL=mistral:7b
-# veya
-OLLAMA_MODEL=llama3:8b
-# veya
-OLLAMA_MODEL=qwen2.5:7b
+OLLAMA_MODEL=llama3.2:3b
 ```
 
 ---
@@ -339,6 +349,34 @@ WS     /ws/{scan_id}
 
 ---
 
+## WSL (Windows Subsystem for Linux)
+
+WSL2 üzerinde tam destek vardır. Kurulum adımları native Linux ile aynıdır:
+
+```bash
+git clone https://github.com/KULLANICI_ADIN/vulnscan-ai.git
+cd vulnscan-ai
+./install.sh    # araçları kur
+./start.sh      # başlat
+```
+
+**Tarayıcı:** WSL'de `start.sh` çalıştırınca Windows'taki varsayılan tarayıcı otomatik açılır.  
+Açılmazsa Windows tarayıcısından manuel olarak: **http://localhost:8080**
+
+**Ollama:** WSL içine kurulur, Windows Ollama'sı **çalışmaz**.
+
+```bash
+# WSL terminalinde
+curl -fsSL https://ollama.ai/install.sh | sh
+ollama serve &          # arka planda başlat
+ollama pull llama3.1:8b
+```
+
+> `ollama serve` komutunu `./start.sh`'den önce çalıştırın.  
+> Kalıcı çözüm için `~/.bashrc`'ye ekleyin: `ollama serve > /dev/null 2>&1 &`
+
+---
+
 ## Sık Karşılaşılan Sorunlar
 
 **`ModuleNotFoundError: No module named 'pydantic_settings'`**
@@ -350,6 +388,24 @@ pip install -r requirements.txt
 ```bash
 cd frontend && npm install --legacy-peer-deps
 ```
+
+**`start.sh` "Frontend build ediliyor..." diyip kapanıyor**
+```bash
+# npm'nin kurulu olup olmadığını kontrol et
+npm --version
+# Yoksa kur (Debian/Ubuntu/WSL)
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+# Sonra dist/ klasörünü sil ve tekrar dene
+rm -rf frontend/dist
+./start.sh
+```
+
+**`paramspider` pip hatası**  
+`install.sh`'in yeni sürümünü kullan — paramspider artık GitHub'dan kuruluyor.
+
+**WSL'de tarayıcı açılmıyor**  
+Windows tarayıcısından manuel aç: **http://localhost:8080**
 
 **Ollama bağlantı hatası**
 ```bash
