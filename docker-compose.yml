@@ -1,0 +1,55 @@
+services:
+
+  # ─────────────────────────────────────────────────────────────
+  # VulnScan AI — Ana uygulama
+  #   FastAPI backend + React frontend + tüm güvenlik araçları
+  # ─────────────────────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vulnscan-ai
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/app/data               # Veritabanı, wordlistler, loglar (kalıcı)
+      - nuclei_templates:/root/nuclei-templates
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.1:8b}
+      - TOOLS_GO_PATH=/usr/local/bin              # Go araçlar /usr/local/bin'de
+      - NUCLEI_TEMPLATES_PATH=/root/nuclei-templates  # Nuclei v3 varsayılan yolu
+    depends_on:
+      - ollama
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ─────────────────────────────────────────────────────────────
+  # Ollama — Yerel LLM sunucusu
+  #   Modeller ollama_data volume'unda saklanır (~5-8 GB)
+  #   İlk çalıştırmada model otomatik indirilir
+  # ─────────────────────────────────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: vulnscan-ollama
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama      # Model dosyaları (kalıcı)
+    ports:
+      - "11434:11434"                  # Dışarıdan Ollama API erişimi (opsiyonel)
+    # NVIDIA GPU desteği için docker-compose.gpu.yml kullanın:
+    #   docker compose -f docker-compose.yml -f docker-compose.gpu.yml up
+
+# ─────────────────────────────────────────────────────────────
+# Kalıcı Volume'lar
+# ─────────────────────────────────────────────────────────────
+volumes:
+  ollama_data:
+    name: vulnscan_ollama_models       # docker volume ls ile görünür
+  nuclei_templates:
+    name: vulnscan_nuclei_templates

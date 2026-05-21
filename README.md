@@ -40,6 +40,86 @@ AI destekli web güvenlik tarama aracı. Subdomain keşfinden otomatik zafiyet t
 
 ---
 
+## Docker ile Çalıştırma (Önerilen)
+
+Docker Compose ile tek komutta her şey hazır gelir:
+- Tüm Go araçları (subfinder, nuclei, dalfox, sqlmap...) imaj içinde
+- Ollama ayrı konteynerde, modeller volume'da kalıcı
+- Frontend build ve backend tek pakette
+
+### Gereksinim: sadece Docker
+
+```bash
+# Docker Desktop veya Docker Engine + Compose v2
+docker --version   # 20.10+
+docker compose version  # 2.x
+```
+
+### Çalıştır (CPU)
+
+```bash
+git clone https://github.com/KULLANICI_ADIN/vulnscan-ai.git
+cd vulnscan-ai
+docker compose up -d
+```
+
+İlk çalıştırmada:
+1. Uygulama imajı derlenir (~10-20 dk, Go araçlar build edilir)
+2. Ollama indirilir (resmi imaj)
+3. LLM modeli otomatik indirilir (~5 GB, arka planda)
+
+Uygulama hazır → **http://localhost:8080**
+
+```bash
+# Logları izle
+docker compose logs -f
+
+# Sadece model indirme durumunu izle
+docker compose logs -f ollama
+
+# Durdur
+docker compose down
+
+# Durdur + volume sil (modeller dahil hepsini sil)
+docker compose down -v
+```
+
+### NVIDIA GPU ile (Ollama hızlanır)
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d
+```
+
+> GPU için `nvidia-container-toolkit` kurulu olmalı.
+
+### Farklı Model Kullan
+
+```bash
+# .env dosyası oluştur (yoksa)
+echo "OLLAMA_MODEL=llama3.2:3b" > .env
+
+# Yeniden başlat
+docker compose up -d
+```
+
+### Docker Mimari Özeti
+
+```
+┌─────────────────────────────────────────┐
+│  vulnscan-ai (port 8080)                │
+│  ├── FastAPI backend                    │
+│  ├── React frontend (static)            │
+│  ├── subfinder, httpx, nuclei, dalfox   │
+│  ├── sqlmap, wafw00f, paramspider       │
+│  └── /app/data → ./data (volume)       │
+├─────────────────────────────────────────┤
+│  vulnscan-ollama (port 11434)           │
+│  └── /root/.ollama → ollama_data (vol) │
+└─────────────────────────────────────────┘
+```
+
+---
+
 ## Kurulum ve Çalıştırma
 
 ### Linux / macOS

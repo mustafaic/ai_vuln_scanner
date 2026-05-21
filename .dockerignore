@@ -1,0 +1,41 @@
+# ─── Python ───────────────────────────────────────────────────
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ─── Node ─────────────────────────────────────────────────────
+frontend/node_modules/
+frontend/dist/          # Docker içinde build ediliyor
+
+# ─── Veri / Çalışma zamanı ────────────────────────────────────
+data/
+*.db
+*.log
+
+# ─── Git ──────────────────────────────────────────────────────
+.git/
+.gitignore
+
+# ─── Ortam ────────────────────────────────────────────────────
+.env
+*.env.local
+
+# ─── Belgeler ─────────────────────────────────────────────────
+README.md
+*.md
+CHANGELOG*
+LICENSE*
+
+# ─── Yerel başlatma betikleri (Docker'da gerekmez) ────────────
+install.sh
+start.sh
+start.bat
+
+# ─── IDE ──────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+.DS_Store

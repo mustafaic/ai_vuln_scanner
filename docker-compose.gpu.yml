@@ -1,0 +1,22 @@
+# NVIDIA GPU desteği override dosyası.
+#
+# Kullanım:
+#   docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d
+#
+# Gereksinim:
+#   - NVIDIA GPU + sürücü
+#   - nvidia-container-toolkit kurulu olmalı
+#     Kurulum: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html
+#
+# Kontrol:
+#   docker run --rm --gpus all nvidia/cuda:12.0-base nvidia-smi
+
+services:
+  ollama:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
