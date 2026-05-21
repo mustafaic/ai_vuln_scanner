@@ -105,7 +105,8 @@ TOOLS = {
             "darwin": "brew install go",
             "windows": "choco install golang",
         },
-        "required": True,
+        # Docker'da Go araçları önceden derlenmiştir — runtime gerekmez
+        "required": not bool(os.environ.get("DOCKER_ENV")),
         "category": "runtime",
         "phase": None,
     },

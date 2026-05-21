@@ -20,6 +20,7 @@ services:
       - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.1:8b}
       - TOOLS_GO_PATH=/usr/local/bin              # Go araçlar /usr/local/bin'de
       - NUCLEI_TEMPLATES_PATH=/root/nuclei-templates  # Nuclei v3 varsayılan yolu
+      - DOCKER_ENV=1                             # Go runtime gereksiz (araçlar derlenmiş)
     depends_on:
       - ollama
     healthcheck:

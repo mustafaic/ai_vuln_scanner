@@ -70,7 +70,7 @@ _WORDLISTS: List[Dict[str, str]] = [
         "name": "top-10000.txt",
         "url": (
             "https://raw.githubusercontent.com/danielmiessler/SecLists"
-            "/master/Discovery/Web-Content/directory-list-2.3-medium.txt"
+            "/master/Discovery/Web-Content/raft-medium-words.txt"
         ),
     },
     {
